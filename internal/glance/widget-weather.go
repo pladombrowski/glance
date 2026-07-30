@@ -18,29 +18,31 @@ import (
 var weatherWidgetTemplate = mustParseTemplate("weather.html", "widget-base.html")
 
 type weatherWidget struct {
-	widgetBase   `yaml:",inline"`
-	Location     string                      `yaml:"location"`
-	ShowAreaName bool                        `yaml:"show-area-name"`
-	HideLocation bool                        `yaml:"hide-location"`
-	HourFormat   string                      `yaml:"hour-format"`
-	Units        string                      `yaml:"units"`
-	Place        *openMeteoPlaceResponseJson `yaml:"-"`
-	Weather      *weather                    `yaml:"-"`
-	TimeLabels   [12]string                  `yaml:"-"`
+	widgetBase     `yaml:",inline"`
+	Location       string                      `yaml:"location"`
+	ShowAreaName   bool                        `yaml:"show-area-name"`
+	HideLocation   bool                        `yaml:"hide-location"`
+	HourFormat     string                      `yaml:"hour-format"`
+	Units          string                      `yaml:"units"`
+	Place          *openMeteoPlaceResponseJson `yaml:"-"`
+	Weather        *weather                    `yaml:"-"`
+	TimeLabels     [12]string                  `yaml:"-"`
+	FeelsLikeLabel string                      `yaml:"-"`
 }
 
-var timeLabels12h = [12]string{"2am", "4am", "6am", "8am", "10am", "12pm", "2pm", "4pm", "6pm", "8pm", "10pm", "12am"}
 var timeLabels24h = [12]string{"02:00", "04:00", "06:00", "08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00", "22:00", "00:00"}
 
 func (widget *weatherWidget) initialize() error {
-	widget.withTitle("Weather").withCacheOnTheHour()
+	loc := widget.locale()
+	widget.withTitle(loc.WeatherTitle).withCacheOnTheHour()
+	widget.FeelsLikeLabel = loc.WeatherFeelsLike
 
 	if widget.Location == "" {
 		return fmt.Errorf("location is required")
 	}
 
 	if widget.HourFormat == "" || widget.HourFormat == "12h" {
-		widget.TimeLabels = timeLabels12h
+		widget.TimeLabels = loc.WeatherTime12h
 	} else if widget.HourFormat == "24h" {
 		widget.TimeLabels = timeLabels24h
 	} else {
@@ -58,7 +60,7 @@ func (widget *weatherWidget) initialize() error {
 
 func (widget *weatherWidget) update(ctx context.Context) {
 	if widget.Place == nil {
-		place, err := fetchOpenMeteoPlaceFromName(widget.Location)
+		place, err := fetchOpenMeteoPlaceFromName(widget.Location, widget.locale().GeocodingLanguage)
 		if err != nil {
 			widget.withError(err).scheduleEarlyUpdate()
 			return
@@ -80,6 +82,13 @@ func (widget *weatherWidget) Render() template.HTML {
 	return widget.renderTemplate(widget, weatherWidgetTemplate)
 }
 
+func (widget *weatherWidget) WeatherCodeAsString() string {
+	if widget.Weather == nil {
+		return ""
+	}
+	return widget.locale().weatherCodeAsString(widget.Weather.WeatherCode)
+}
+
 type weather struct {
 	Temperature         int
 	ApparentTemperature int
@@ -88,14 +97,6 @@ type weather struct {
 	SunriseColumn       int
 	SunsetColumn        int
 	Columns             []weatherColumn
-}
-
-func (w *weather) WeatherCodeAsString() string {
-	if weatherCode, ok := weatherCodeTable[w.WeatherCode]; ok {
-		return weatherCode
-	}
-
-	return ""
 }
 
 type openMeteoPlacesResponseJson struct {
@@ -168,9 +169,28 @@ func parsePlaceName(name string) (string, string) {
 	return parts[0] + ", " + expandCountryAbbreviations(parts[2]), strings.TrimSpace(parts[1])
 }
 
-func fetchOpenMeteoPlaceFromName(location string) (*openMeteoPlaceResponseJson, error) {
+func fetchOpenMeteoPlaceFromName(location, language string) (*openMeteoPlaceResponseJson, error) {
 	location, area := parsePlaceName(location)
-	requestUrl := fmt.Sprintf("https://geocoding-api.open-meteo.com/v1/search?name=%s&count=20&language=en&format=json", url.QueryEscape(location))
+	if language == "" {
+		language = "en"
+	}
+
+	place, err := fetchOpenMeteoPlace(location, area, language)
+	// Open-Meteo matches country names to the requested language ("Brazil" works
+	// with language=en, "Brasil" with language=pt). Fall back to English so
+	// existing configs keep working when the UI locale is not English.
+	if err != nil && language != "en" {
+		place, err = fetchOpenMeteoPlace(location, area, "en")
+	}
+	return place, err
+}
+
+func fetchOpenMeteoPlace(location, area, language string) (*openMeteoPlaceResponseJson, error) {
+	requestUrl := fmt.Sprintf(
+		"https://geocoding-api.open-meteo.com/v1/search?name=%s&count=20&language=%s&format=json",
+		url.QueryEscape(location),
+		url.QueryEscape(language),
+	)
 	request, _ := http.NewRequest("GET", requestUrl, nil)
 	responseJson, err := decodeJsonFromRequest[openMeteoPlacesResponseJson](defaultHTTPClient, request)
 	if err != nil {
@@ -292,35 +312,4 @@ func fetchWeatherForOpenMeteoPlace(place *openMeteoPlaceResponseJson, units stri
 		SunsetColumn:        sunsetBar,
 		Columns:             bars,
 	}, nil
-}
-
-var weatherCodeTable = map[int]string{
-	0:  "Clear Sky",
-	1:  "Mainly Clear",
-	2:  "Partly Cloudy",
-	3:  "Overcast",
-	45: "Fog",
-	48: "Rime Fog",
-	51: "Drizzle",
-	53: "Drizzle",
-	55: "Drizzle",
-	56: "Drizzle",
-	57: "Drizzle",
-	61: "Rain",
-	63: "Moderate Rain",
-	65: "Heavy Rain",
-	66: "Freezing Rain",
-	67: "Freezing Rain",
-	71: "Snow",
-	73: "Moderate Snow",
-	75: "Heavy Snow",
-	77: "Snow Grains",
-	80: "Rain",
-	81: "Moderate Rain",
-	82: "Heavy Rain",
-	85: "Snow",
-	86: "Snow",
-	95: "Thunderstorm",
-	96: "Thunderstorm",
-	99: "Thunderstorm",
 }

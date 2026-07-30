@@ -30,6 +30,8 @@ type videosWidget struct {
 	Channels          []string  `yaml:"channels"`
 	Playlists         []string  `yaml:"playlists"`
 	Limit             int       `yaml:"limit"`
+	MaxAgeDays        int       `yaml:"max-age-days"`
+	VideosPerChannel  int       `yaml:"videos-per-channel"`
 	IncludeShorts     bool      `yaml:"include-shorts"`
 }
 
@@ -38,6 +40,14 @@ func (widget *videosWidget) initialize() error {
 
 	if widget.Limit <= 0 {
 		widget.Limit = 25
+	}
+
+	if widget.MaxAgeDays < 0 {
+		widget.MaxAgeDays = 0
+	}
+
+	if widget.VideosPerChannel < 0 {
+		widget.VideosPerChannel = 0
 	}
 
 	if widget.CollapseAfterRows == 0 || widget.CollapseAfterRows < -1 {
@@ -68,6 +78,14 @@ func (widget *videosWidget) update(ctx context.Context) {
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
+	}
+
+	if widget.MaxAgeDays > 0 {
+		videos = videos.filterNewerThan(time.Duration(widget.MaxAgeDays) * 24 * time.Hour)
+	}
+
+	if widget.VideosPerChannel > 0 {
+		videos = videos.limitPerChannel(widget.VideosPerChannel)
 	}
 
 	if len(videos) > widget.Limit {
@@ -136,6 +154,36 @@ func (v videoList) sortByNewest() videoList {
 	})
 
 	return v
+}
+
+func (v videoList) filterNewerThan(maxAge time.Duration) videoList {
+	cutoff := time.Now().Add(-maxAge)
+	filtered := make(videoList, 0, len(v))
+
+	for i := range v {
+		if v[i].TimePosted.After(cutoff) {
+			filtered = append(filtered, v[i])
+		}
+	}
+
+	return filtered
+}
+
+func (v videoList) limitPerChannel(limit int) videoList {
+	counts := make(map[string]int, len(v))
+	filtered := make(videoList, 0, len(v))
+
+	for i := range v {
+		author := v[i].Author
+		if counts[author] >= limit {
+			continue
+		}
+
+		counts[author]++
+		filtered = append(filtered, v[i])
+	}
+
+	return filtered
 }
 
 func fetchYoutubeChannelUploads(channelOrPlaylistIDs []string, videoUrlTemplate string, includeShorts bool) (videoList, error) {

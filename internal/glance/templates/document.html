@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" id="top" data-theme="{{ .Request.Theme.Key }}" data-scheme="{{ if .Request.Theme.Light }}light{{ else }}dark{{ end }}">
+<html lang="{{ .App.Config.Language }}" id="top" data-theme="{{ .Request.Theme.Key }}" data-scheme="{{ if .Request.Theme.Light }}light{{ else }}dark{{ end }}">
 <head>
     {{ block "document-head-before" . }}{{ end }}
     <script>
@@ -8,6 +8,8 @@
         /*{{ if .Page }}*/slug: "{{ .Page.Slug }}",/*{{ end }}*/
         baseURL: "{{ .App.Config.Server.BaseURL }}",
         theme: "{{ .Request.Theme.Key }}",
+        locale: "{{ .App.Config.Language }}",
+        i18n: {{ .App.Config.ClientI18nJSON }},
     };
     </script>
     <title>{{ block "document-title" . }}{{ end }}</title>

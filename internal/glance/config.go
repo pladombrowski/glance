@@ -65,6 +65,9 @@ type config struct {
 		AppBackgroundColor string        `yaml:"app-background-color"`
 	} `yaml:"branding"`
 
+	Language string  `yaml:"language"`
+	locale   *locale `yaml:"-"`
+
 	Pages []page `yaml:"pages"`
 }
 
@@ -108,6 +111,10 @@ func newConfigFromYAML(contents []byte) (*config, error) {
 	if err = isConfigStateValid(config); err != nil {
 		return nil, err
 	}
+
+	config.Language = normalizeLanguageCode(config.Language)
+	config.locale = resolveLocale(config.Language)
+	defaultLocale = config.locale
 
 	for p := range config.Pages {
 		for w := range config.Pages[p].HeadWidgets {
@@ -449,6 +456,10 @@ func configFilesWatcher(
 // and then again when creating the application which does modify the data and do
 // further validation. Would be better if validation was done in a single place.
 func isConfigStateValid(config *config) error {
+	if !isSupportedLanguage(config.Language) {
+		return fmt.Errorf("unsupported language %q, supported: en, pt-BR", config.Language)
+	}
+
 	if len(config.Pages) == 0 {
 		return fmt.Errorf("no pages configured")
 	}

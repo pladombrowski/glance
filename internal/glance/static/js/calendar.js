@@ -2,8 +2,12 @@ import { directions, easeOutQuint, slideFade } from "./animations.js";
 import { elem, repeat, text } from "./templating.js";
 
 const FULL_MONTH_SLOTS = 7*6;
-const WEEKDAY_ABBRS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const i18n = pageData.i18n || {};
+const WEEKDAY_ABBRS = i18n.weekdaysAbbr || ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const MONTH_NAMES = i18n.months || ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const TITLE_BACK_TO_CURRENT = i18n.calendarBackToCurrent || "Back to current month";
+const TITLE_PREVIOUS_MONTH = i18n.calendarPreviousMonth || "Previous month";
+const TITLE_NEXT_MONTH = i18n.calendarNextMonth || "Next month";
 
 const leftArrowSvg = `<svg stroke="var(--color-text-base)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" xmlns="http://www.w3.org/2000/svg">
   <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
@@ -85,7 +89,7 @@ function Header(nextClicked, prevClicked, undoClicked) {
         undo = button()
             .hide()
             .classes("calendar-undo-button")
-            .attr("title", "Back to current month")
+            .attr("title", TITLE_BACK_TO_CURRENT)
             .on("click", undoClicked)
             .html(undoArrowSvg)
     );
@@ -94,14 +98,14 @@ function Header(nextClicked, prevClicked, undoClicked) {
         .classes("flex", "gap-7", "items-center")
         .append(
             button()
-                .attr("title", "Previous month")
+                .attr("title", TITLE_PREVIOUS_MONTH)
                 .on("click", prevClicked)
                 .html(leftArrowSvg),
             monthNumber = elem()
                 .classes("color-highlight")
                 .styles({ marginTop: "0.1rem" }),
             button()
-                .attr("title", "Next month")
+                .attr("title", TITLE_NEXT_MONTH)
                 .on("click", nextClicked)
                 .html(rightArrowSvg),
         );

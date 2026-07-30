@@ -10,6 +10,7 @@
   - [Config schema](#config-schema)
 - [Authentication](#authentication)
 - [Server](#server)
+- [Language](#language)
 - [Document](#document)
 - [Branding](#branding)
 - [Theme](#theme)
@@ -346,6 +347,22 @@ To be able to point to an asset from your assets path, use the `/assets/` path l
 ```yaml
 icon: /assets/gitea-icon.png
 ```
+
+## Language
+Sets the language used by supported widgets (currently **calendar**, **clock**, and **weather**). Example:
+
+```yaml
+language: pt-BR
+```
+
+### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| language | string | no | en |
+
+#### `language`
+Supported values: `en`, `pt-BR` (also accepts `pt_BR` / `pt-br`). Other widgets remain in English until they are localized.
 
 ## Document
 If you want to insert custom HTML into the `<head>` of the document for all pages, you can do so by using the `document` property. Example:
@@ -869,6 +886,8 @@ Preview:
 | channels | array | yes | |
 | playlists | array | no | |
 | limit | integer | no | 25 |
+| max-age-days | integer | no | 0 |
+| videos-per-channel | integer | no | 0 |
 | style | string | no | horizontal-cards |
 | collapse-after | integer | no | 7 |
 | collapse-after-rows | integer | no | 4 |
@@ -904,6 +923,12 @@ https://www.youtube.com...&list={ID}&...
 
 ##### `limit`
 The maximum number of videos to show.
+
+##### `max-age-days`
+Only include videos published within the last N days. Set to `0` to disable (default).
+
+##### `videos-per-channel`
+The maximum number of videos to include from each channel. Useful when one channel uploads frequently and would otherwise dominate the list. Set to `0` to disable (default).
 
 ##### `collapse-after`
 Specify the number of videos to show when using the `vertical-list` style before the "SHOW MORE" button appears.
@@ -2489,16 +2514,28 @@ The authentication token to use when fetching the statistics.
 The maximum time to wait for a response from the server. The value is a string and must be a number followed by one of s, m, h, d. Example: `10s` for 10 seconds, `1m` for 1 minute, etc
 
 ### Repository
-Display general information about a repository as well as a list of the latest open pull requests and issues.
+Display general information about a repository as well as a list of the latest open pull requests and issues. Multiple repositories can be shown stacked in the same widget.
 
 Example:
 
 ```yaml
 - type: repository
-  repository: glanceapp/glance
+  repositories:
+    - glanceapp/glance
+    - glanceapp/docs
   pull-requests-limit: 5
   issues-limit: 3
   commits-limit: 3
+  commit-label-template: "{AUTHOR} - {MESSAGE}"
+  pull-request-label-template: "#{NUMBER} {TITLE}"
+  issue-label-template: "#{NUMBER} {TITLE}"
+```
+
+A single repository can still be specified with the `repository` property:
+
+```yaml
+- type: repository
+  repository: glanceapp/glance
 ```
 
 Preview:
@@ -2509,14 +2546,29 @@ Preview:
 
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
-| repository | string | yes |  |
+| repository | string | no* |  |
+| repositories | array | no* |  |
 | token | string | no | |
 | pull-requests-limit | integer | no | 3 |
 | issues-limit | integer | no | 3 |
 | commits-limit | integer | no | -1 |
+| commit-label-template | string | no | `{MESSAGE}` |
+| pull-request-label-template | string | no | `{TITLE}` |
+| issue-label-template | string | no | `{TITLE}` |
+
+\* Either `repository` or `repositories` must be provided.
 
 ##### `repository`
-The owner and repository name that will have their information displayed.
+The owner and repository name that will have their information displayed. Prefer `repositories` when showing more than one.
+
+##### `repositories`
+A list of owner/repository names. Each repository is displayed as a full stacked section (stars, forks, commits, pull requests and issues).
+
+```yaml
+repositories:
+  - glanceapp/glance
+  - another/repo
+```
 
 ##### `token`
 Without authentication Github allows for up to 60 requests per hour. You can easily exceed this limit and start seeing errors if your cache time is low or you have many instances of this widget. To circumvent this you can [create a read only token from your Github account](https://github.com/settings/personal-access-tokens/new) and provide it here.
@@ -2529,6 +2581,33 @@ The maximum number of latest open issues to show. Set to `-1` to not show any.
 
 ##### `commits-limit`
 The maximum number of lastest commits to show from the default branch. Set to `-1` to not show any.
+
+##### `commit-label-template`
+Template used for the visible commit label. Available placeholders:
+
+* `{SHA}` - the commit SHA
+* `{AUTHOR}` - the commit author name
+* `{MESSAGE}` - the commit message
+
+Example: `{AUTHOR} - {MESSAGE}`
+
+##### `pull-request-label-template`
+Template used for the visible pull request label. Available placeholders:
+
+* `{NUMBER}` - the pull request number
+* `{TITLE}` - the pull request title
+* `{AUTHOR}` - the pull request author username
+
+Example: `#{NUMBER} {TITLE}`
+
+##### `issue-label-template`
+Template used for the visible issue label. Available placeholders:
+
+* `{NUMBER}` - the issue number
+* `{TITLE}` - the issue title
+* `{AUTHOR}` - the issue author username
+
+Example: `#{NUMBER} {TITLE}`
 
 ### Bookmarks
 Display a list of links which can be grouped.

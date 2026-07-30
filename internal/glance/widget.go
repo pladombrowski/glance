@@ -168,6 +168,17 @@ type widgetBase struct {
 
 type widgetProviders struct {
 	assetResolver func(string) string
+	locale        *locale
+}
+
+func (w *widgetBase) locale() *locale {
+	if w.Providers != nil && w.Providers.locale != nil {
+		return w.Providers.locale
+	}
+	if defaultLocale != nil {
+		return defaultLocale
+	}
+	return localeEn
 }
 
 func (w *widgetBase) requiresUpdate(now *time.Time) bool {

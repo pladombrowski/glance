@@ -148,6 +148,7 @@ func newApplication(c *config) (*application, error) {
 
 	providers := &widgetProviders{
 		assetResolver: app.StaticAssetPath,
+		locale:        config.locale,
 	}
 
 	for p := range config.Pages {

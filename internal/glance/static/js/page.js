@@ -498,8 +498,18 @@ function afterContentReady(callback) {
     contentReadyCallbacks.push(callback);
 }
 
-const weekDayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const clockI18n = pageData.i18n || {};
+const weekDayNames = clockI18n.weekdaysFull || ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const monthNames = clockI18n.months || ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const dateSeparator = clockI18n.dateSeparator != null ? clockI18n.dateSeparator : ' ';
+const clockAM = clockI18n.clockAM || 'AM';
+const clockPM = clockI18n.clockPM || 'PM';
+const clockBehind = clockI18n.clockBehind || 'behind';
+const clockAhead = clockI18n.clockAhead || 'ahead';
+const clockHour = clockI18n.clockHour || 'hour';
+const clockHours = clockI18n.clockHours || 'hours';
+const clockMinutes = clockI18n.clockMinutes || 'minutes';
+const clockAnd = clockI18n.clockAnd || 'and';
 
 function makeSettableTimeElement(element, hourFormat) {
     const fragment = document.createDocumentFragment();
@@ -518,7 +528,7 @@ function makeSettableTimeElement(element, hourFormat) {
         const hours = date.getHours();
 
         if (hourFormat == '12h') {
-            amPm.textContent = hours < 12 ? 'AM' : 'PM';
+            amPm.textContent = hours < 12 ? clockAM : clockPM;
             hour.textContent = hours % 12 || 12;
         } else {
             hour.textContent = hours < 10 ? '0' + hours : hours;
@@ -551,23 +561,23 @@ function zoneDiffText(diffInMinutes) {
     }
 
     const sign = diffInMinutes < 0 ? "-" : "+";
-    const signText = diffInMinutes < 0 ? "behind" : "ahead";
+    const signText = diffInMinutes < 0 ? clockBehind : clockAhead;
 
     diffInMinutes = Math.abs(diffInMinutes);
 
     const hours = Math.floor(diffInMinutes / 60);
     const minutes = diffInMinutes % 60;
-    const hourSuffix = hours == 1 ? "" : "s";
+    const hourWord = hours == 1 ? clockHour : clockHours;
 
     if (minutes == 0) {
-        return { text: `${sign}${hours}h`, title: `${hours} hour${hourSuffix} ${signText}` };
+        return { text: `${sign}${hours}h`, title: `${hours} ${hourWord} ${signText}` };
     }
 
     if (hours == 0) {
-        return { text: `${sign}${minutes}m`, title: `${minutes} minutes ${signText}` };
+        return { text: `${sign}${minutes}m`, title: `${minutes} ${clockMinutes} ${signText}` };
     }
 
-    return { text: `${sign}${hours}h~`, title: `${hours} hour${hourSuffix} and ${minutes} minutes ${signText}` };
+    return { text: `${sign}${hours}h~`, title: `${hours} ${hourWord} ${clockAnd} ${minutes} ${clockMinutes} ${signText}` };
 }
 
 function setupClocks() {
@@ -595,7 +605,7 @@ function setupClocks() {
 
         updateCallbacks.push((now) => {
             setLocalTime(now);
-            localDateElement.textContent = now.getDate() + ' ' + monthNames[now.getMonth()];
+            localDateElement.textContent = now.getDate() + dateSeparator + monthNames[now.getMonth()];
             localWeekdayElement.textContent = weekDayNames[now.getDay()];
             localYearElement.textContent = now.getFullYear();
         });
