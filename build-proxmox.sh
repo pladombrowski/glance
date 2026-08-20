@@ -1,0 +1,1 @@
+mkdir -p build && GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -o build/glance-linux-amd64 . && ls -lh build/glance-linux-amd64 && file build/glance-linux-amd64
