@@ -198,6 +198,12 @@ icon: di:immich # di for Dashboard icons https://github.com/homarr-labs/dashboar
 icon: mdi:camera # mdi for Material Design icons https://pictogrammers.com/library/mdi/
 ```
 
+The `sh:` and `di:` prefixes request SVG icons by default. If an icon is only available as a PNG, add the extension to its name:
+
+```yaml
+icon: sh:unmanic.png
+```
+
 > [!NOTE]
 >
 > The icons are loaded externally and are hosted on `cdn.jsdelivr.net`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
@@ -1904,7 +1910,7 @@ Preview:
 
 To reorder tasks, drag and drop them by grabbing the top side of the task:
 
-![](images/reorder-todo-tasks-prevew.gif)
+![](images/reorder-todo-tasks-preview.gif)
 
 To delete a task, hover over it and click on the trash icon.
 
@@ -2264,7 +2270,9 @@ When set to `true`, automatically converts container names such as `container_na
 ##### `sock-path`
 The path to the Docker socket. This can also be a [remote socket](https://docs.docker.com/engine/daemon/remote-access/) or proxied socket using something like [docker-socket-proxy](https://github.com/Tecnativa/docker-socket-proxy).
 
-###### `category`
+If the socket path starts with `tcp://` or `http://`, it will be treated as a remote socket. Anything else will be treated as a path to a Unix socket.
+
+##### `category`
 Filter to only the containers which have this category specified via the `glance.category` label. Useful if you want to have multiple containers widgets, each showing a different set of containers.
 
 <details>
