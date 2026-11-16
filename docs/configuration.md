@@ -493,7 +493,7 @@ Color used across the page, largely to indicate unvisited links.
 Used to indicate that something is positive, such as stock price being up, twitch channel being live or a monitored site being online. If not set, the value of `primary-color` will be used.
 
 #### `negative-color`
-Oppposite of `positive-color`.
+Opposite of `positive-color`.
 
 #### `contrast-multiplier`
 Used to increase or decrease the contrast (in other words visibility) of the text. A value of `1.3` means that the text will be 30% lighter/darker depending on the scheme. Use this if you think that some of the text on the page is too dark and hard to read. Example:
@@ -1195,6 +1195,8 @@ Can be used to specify the order in which the posts should get returned. Possibl
 Available only when `sort-by` is set to `top`. Possible values are `hour`, `day`, `week`, `month`, `year` and `all`.
 
 ##### `search`
+**Due to changes in Reddit's API, the search property works only when app-auth is configured.**
+
 Keywords to search for. Searching within specific fields is also possible, **though keep in mind that Reddit may remove the ability to use any of these at any time**:
 
 ![](images/reddit-field-search.png)
@@ -1756,7 +1758,7 @@ Currently, the available methods on the `.Options` object are: `StringOr`, `IntO
 </details>
 
 ##### `parameters`
-A list of keys and values that will be sent to the custom-api as query paramters.
+A list of keys and values that will be sent to the custom-api as query parameters.
 
 ##### `subrequests`
 A map of additional requests that will be executed concurrently and then made available in the template via the `.Subrequest` property. Example:
@@ -1846,7 +1848,7 @@ Whether to allow the extension to display HTML.
 > There's a reason this property is scary-sounding. It's intended to be used by developers who are comfortable with developing and using their own extensions. Do not enable it if you have no idea what it means or if you're not **absolutely sure** that the extension URL you're using is safe.
 
 ##### `parameters`
-A list of keys and values that will be sent to the extension as query paramters.
+A list of keys and values that will be sent to the extension as query parameters.
 
 ### Weather
 Display weather information for a specific location. The data is provided by https://open-meteo.com/.
@@ -1886,7 +1888,7 @@ Each bar represents a 2 hour interval. The yellow background represents sunrise 
 | show-area-name | boolean | no | false |
 
 ##### `location`
-The name of the city and country to fetch weather information for. Attempting to launch the applcation with an invalid location will result in an error. You can use the [gecoding API page](https://open-meteo.com/en/docs/geocoding-api) to search for your specific location. Glance will use the first result from the list if there are multiple.
+The name of the city and country to fetch weather information for. Attempting to launch the application with an invalid location will result in an error. You can use the [gecoding API page](https://open-meteo.com/en/docs/geocoding-api) to search for your specific location. Glance will use the first result from the list if there are multiple.
 
 ##### `units`
 Whether to show the temperature in celsius or fahrenheit, possible values are `metric` or `imperial`.
@@ -2445,6 +2447,8 @@ In the event that the CPU temperature goes over 80°C, a flame icon will appear 
 
 ![](images/server-stats-flame-icon.png)
 
+The CPU value is calculated from the system's load average (1 minute, with the 15 minute average shown in the popover) relative to the number of logical CPU cores. On Linux, the load average also includes processes that are waiting for disk I/O, so on servers with a lot of disk activity, such as a NAS with spinning hard drives, the value can be noticeably higher than the actual CPU utilization.
+
 #### Properties
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
@@ -2604,7 +2608,7 @@ The maximum number of latest open pull requests to show. Set to `-1` to not show
 The maximum number of latest open issues to show. Set to `-1` to not show any.
 
 ##### `commits-limit`
-The maximum number of lastest commits to show from the default branch. Set to `-1` to not show any.
+The maximum number of latest commits to show from the default branch. Set to `-1` to not show any.
 
 ##### `commit-label-template`
 Template used for the visible commit label. Available placeholders:

@@ -3,7 +3,6 @@ package glance
 import (
 	"context"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"runtime"
@@ -70,14 +69,6 @@ var diagnosticSteps = []diagnosticStep{
 		name: "fetch data from Open-Meteo API",
 		fn: func() (string, error) {
 			return testHttpRequest("GET", "https://geocoding-api.open-meteo.com/v1/search?name=London", 200)
-		},
-	},
-	{
-		name: "fetch data from Reddit API",
-		fn: func() (string, error) {
-			return testHttpRequestWithHeaders("GET", "https://www.reddit.com/search.json", map[string]string{
-				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:137.0) Gecko/20100101 Firefox/137.0",
-			}, 200)
 		},
 	},
 	{
@@ -173,7 +164,7 @@ func testHttpRequestWithHeaders(method, url string, headers map[string]string, e
 	}
 	defer response.Body.Close()
 
-	body, err := io.ReadAll(response.Body)
+	body, err := readAllLimited(response.Body, defaultMaxResponseBodyLength)
 	if err != nil {
 		return "", err
 	}

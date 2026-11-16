@@ -196,6 +196,7 @@ function setupSearchBoxes() {
         document.addEventListener("keydown", (event) => {
             if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
             if (event.code != "KeyS") return;
+            if (event.ctrlKey || event.metaKey || event.altKey) return;
 
             inputElement.focus();
             event.preventDefault();
@@ -718,6 +719,15 @@ function initThemePicker() {
     let themePreviewElems = document.getElementsByClassName("current-theme-preview");
     let isLoading = false;
 
+    function syncThemePreset() {
+        presetElems.forEach((e) => {
+            const isActive = e.dataset.key == pageData.theme;
+            e.classList.toggle("current", isActive);
+            e.setAttribute("aria-pressed", isActive ? "true" : "false");
+        });
+    }
+    syncThemePreset();
+
     presetElems.forEach((presetElement) => {
         const themeKey = presetElement.dataset.key;
 
@@ -737,21 +747,20 @@ function initThemePicker() {
             changeTheme(themeKey, function() {
                 isLoading = false;
                 pageData.theme = themeKey;
-                presetElems.forEach((e) => { e.classList.remove("current"); });
+                syncThemePreset();
 
                 Array.from(themePreviewElems).forEach((preview) => {
-                    preview.querySelector(".theme-preset").replaceWith(
-                        presetElement.cloneNode(true)
-                    );
-                })
+                    const button = preview.querySelector(".theme-preset");
+                    const clone = presetElement.cloneNode(true);
 
-                presetElems.forEach((e) => {
-                    if (e.dataset.key != themeKey) return;
-                    e.classList.add("current");
+                    clone.removeAttribute("aria-pressed");
+                    clone.setAttribute("aria-label", "Change theme");
+
+                    button.replaceWith(clone);
                 });
             });
         });
-    })
+    });
 }
 
 async function setupPage() {

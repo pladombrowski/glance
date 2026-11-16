@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"html"
 	"html/template"
-	"io"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -228,7 +227,7 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 		return nil, fmt.Errorf("unexpected status code %d from %s", resp.StatusCode, request.URL)
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := readAllLimited(resp.Body, defaultMaxResponseBodyLength)
 	if err != nil {
 		return nil, err
 	}
@@ -244,11 +243,23 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 
 	items := make(rssFeedItemList, 0, len(feed.Items))
 
+	feedURL := strings.TrimRight(feed.Link, "/")
+	if feedURL == "" {
+		parsed, err := url.Parse(request.URL)
+		if err != nil {
+			parsed = &url.URL{}
+		}
+		parsed.Path = ""
+		parsed.RawQuery = ""
+		parsed.Fragment = ""
+		feedURL = parsed.String()
+	}
+
 	for i := range feed.Items {
 		item := feed.Items[i]
 
 		rssItem := rssFeedItem{
-			ChannelURL: feed.Link,
+			ChannelURL: feedURL,
 		}
 
 		if request.ItemLinkPrefix != "" {
@@ -257,7 +268,7 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 			rssItem.Link = item.Link
 		} else {
 			parsedUrl, err := url.Parse(feed.Link)
-			if err != nil {
+			if err != nil || feed.Link == "/" {
 				parsedUrl, err = url.Parse(request.URL)
 			}
 
